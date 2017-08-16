@@ -1,0 +1,164 @@
+<DOCTYPE html>
+    <html>
+
+    <head>
+        <title>chatAlterzipe-demo</title>
+        
+    </head>
+    <link href="css/bootstrap.css" rel="stylesheet" />
+  
+    <link href="css/main.css" rel="stylesheet" />
+ <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet" type="text/css">
+
+    <body>
+        <div class="container bgcontainer">
+
+            <div class="row">
+                <div class="col-md-4 col-md-offset-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4 id="showname">Name : </h4>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 id="onlineid" class="pull-right">User 0 online</h4>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+            <div class="row">
+                <div class="box box--container">
+                    <div class="box box--chat">
+                        <ul id="chat-history">
+                        </ul>
+                        <form id="chat-form" action="">
+                            <div class="input-group">
+                               
+                                <input type="text" class="form-control" id="chat-message" autocomplete="off" maxlength="500" placeholder="Enter message here..."
+                                    aria-describedby="basic-addon1"> <span class="input-group-addon" id="basic-addon1"><i class="fa fa-send"></i></span>
+                            </div>
+
+
+
+
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+            <div style="margin-top:100px" class="text-center">
+                <strong class="label label-success">credit by - golfziiler</strong>
+
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="InputName" role="dialog">
+            <div class="modal-dialog">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header modal-bgHead-back">
+
+                        <h4 class="modal-title"> Create Display name</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" maxlength="10" class="form-control" id="displayname" placeholder="Input display name....">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="CreateNameid" class="btn btn-success">Create</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </body>
+
+    <script src="https://cdn.socket.io/socket.io-1.3.3.js"></script>
+    <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="js/jquery.cookie.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script>
+        var socket = io();
+        var chatForm = $('#chat-form');
+        var chatHistory = $("#chat-history");
+        var inputMessage = $('#chat-message');
+        var inputdisplay = $('#displayname');
+        var username = '';
+
+
+
+        //$.removeCookie("chatAlterzipe");//remove cooke
+        var cookieValue = $.cookie("chatAlterzipe");//Get cookie
+        if (cookieValue == undefined) {
+            setTimeout(function () {
+                $('#InputName').modal('toggle');
+            }, 1000);
+        }
+        else {
+            username = cookieValue;
+            $('#showname').text('Name : ' + cookieValue);
+        }
+
+        $('#CreateNameid').click(function () {
+            if (inputdisplay.val().trim().length > 0) {
+                username = $('#displayname').val();
+                $('#showname').text('Name :' + username);
+                $.cookie("chatAlterzipe", username, { expires: 30 });//create cookie               
+
+                $('#InputName').modal('toggle');
+                socket.emit('chat', {
+                    username: username,
+                    message: 'Online'
+                });
+
+
+            }
+
+        });
+
+        chatForm.submit(function () {
+            if (username != '') {
+                if (inputMessage.val().trim().length > 0) {
+                    socket.emit('chat', {
+                        username: username,
+                        message: inputMessage.val()
+                    });
+
+                }
+                $(this)[0].reset();
+                return false;
+
+            }
+            else {
+                alert('Please input display name', function () {
+                    $('#InputName').modal('toggle');
+                });
+
+            }
+
+        });
+
+        socket.on('chat', function (data) {
+            if (username != '') {
+                if (data.username == username) {
+                    // ถ้าเราเป็นคนส่งเอง ให้พ่น li.message.message--me
+                    chatHistory.append($('<li class="message message--me">').text(data.message));
+                } else {
+                    // แต่ถ้าเป็นคนอื่นส่ง ให้พ่น li.message เฉยๆ
+                    chatHistory.append($('<li class="message">').text(data.username + ': ' + data.message));
+                }
+                // เมื่อพ่นข้อความแล้ว ก็ให้เลื่อนหน้าจอไปที่ข้อความล่าสุดด้วย
+                chatHistory[0].scrollTop = chatHistory[0].scrollHeight;
+            }
+
+        });
+        socket.on('online', function (data) {
+            console.log(data)
+            $('#onlineid').text('User ' + data + ' online')
+        });
+    </script>
+
+    </html>
