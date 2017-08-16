@@ -2,13 +2,14 @@ var express = require('express');
 
 var app = express();
 var path = require('path');
-var port = 3333;
+var port = process.env.PORT   || 3333;
 
 var server = app.listen(port, function () {
     console.log('Listening on port: ' + port);
 });
 
 app.use(express.static('public'));
+//app.set('port', process.env.PORT);
 
 
 
